@@ -1,0 +1,183 @@
+import pygame
+import random
+import math
+import os
+import glob
+
+class Boss:
+    def __init__(self, x, y):
+        # Cargar frames de animación del jefe
+        self.x = x
+        self.y = y
+        
+        # Intentar cargar frames de animación
+        self.animation_frames = []
+        self.using_animation = False
+        
+        try:
+            # Obtener ruta a assets/images/animation_frames desde src/entities/
+            entities_dir = os.path.dirname(__file__)
+            src_dir = os.path.dirname(entities_dir)
+            project_root = os.path.dirname(src_dir)
+            frames_folder = os.path.join(project_root, 'assets', 'images', 'animation_frames')
+            frame_files = sorted(glob.glob(os.path.join(frames_folder, 'frame_*.png')))
+            
+            if frame_files:
+                print(f"Cargando {len(frame_files)} frames de animación...")
+                for frame_file in frame_files:
+                    frame = pygame.image.load(frame_file).convert_alpha()
+                    # Escalar frames a tamaño más grande (más ancho)
+                    scaled_frame = pygame.transform.scale(frame, (880, 500))
+                    self.animation_frames.append(scaled_frame)
+                
+                self.using_animation = True
+                self.current_frame = 0
+                self.frame_delay = 2  # Cambiar frame cada 2 ticks del juego
+                self.frame_counter = 0
+                self.image_width = 400
+                self.image_height = 300
+                print(f"Se cargaron exitosamente {len(self.animation_frames)} frames")
+        except Exception as e:
+            print(f"No se pudieron cargar los frames de animación: {e}")
+            self.using_animation = False
+        
+        # Usar imagen estática si la animación no está disponible
+        if not self.using_animation:
+            try:
+                # Obtener ruta a assets/images/boss.png desde src/entities/
+                entities_dir = os.path.dirname(__file__)
+                src_dir = os.path.dirname(entities_dir)
+                project_root = os.path.dirname(src_dir)
+                boss_image_path = os.path.join(project_root, 'assets', 'images', 'boss.png')
+                self.original_image = pygame.image.load(boss_image_path).convert_alpha()
+                self.image_width = 150
+                self.image_height = 150
+                self.image = pygame.transform.scale(self.original_image, (self.image_width, self.image_height))
+                self.using_image = True
+            except:
+                self.using_image = False
+                self.image_width = 80
+                self.image_height = 80
+        
+        self.health = 200
+        self.max_health = 200
+        self.stun_duration = 0
+        
+        # Animación de flotación
+        self.float_offset = 0
+        self.float_speed = 0.05
+        
+    def update(self, player):
+        """Actualizar IA y comportamiento del jefe"""
+        # Actualizar aturdimiento
+        if self.stun_duration > 0:
+            self.stun_duration -= 1
+            return
+        
+        # Animación de flotación
+        self.float_offset += self.float_speed
+        
+        # Actualizar frame de animación
+        if self.using_animation:
+            self.frame_counter += 1
+            if self.frame_counter >= self.frame_delay:
+                self.frame_counter = 0
+                self.current_frame = (self.current_frame + 1) % len(self.animation_frames)
+    
+    def take_damage(self, damage):
+        """Recibir daño de un proyectil"""
+        self.health -= damage
+        if self.health < 0:
+            self.health = 0
+    
+    def stun(self, duration=60):
+        """Aturdir al jefe"""
+        self.stun_duration = duration
+    
+    def is_alive(self):
+        """Verificar si el jefe está vivo"""
+        return self.health > 0
+    
+    def draw(self, screen):
+        """Dibujar al jefe"""
+        # Calcular posición de flotación
+        float_y = self.y + math.sin(self.float_offset) * 10
+        
+        if self.using_animation:
+            # Dibujar frame de animación actual
+            current_image = self.animation_frames[self.current_frame]
+            
+            # Parpadear en blanco cuando está aturdido
+            if self.stun_duration > 0 and (self.stun_duration // 5) % 2 == 0:
+                flash_surface = pygame.Surface((self.image_width, self.image_height))
+                flash_surface.fill((255, 255, 255))
+                flash_surface.set_alpha(150)
+                current_image = current_image.copy()
+                current_image.blit(flash_surface, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
+            
+            # Dibujar centrado
+            image_x = self.x
+            image_y = float_y
+            screen.blit(current_image, (image_x, image_y))
+            
+        elif hasattr(self, 'using_image') and self.using_image:
+            # Dibujar imagen estática
+            boss_image = self.image
+            
+            if self.stun_duration > 0 and (self.stun_duration // 5) % 2 == 0:
+                flash_surface = pygame.Surface((self.image_width, self.image_height))
+                flash_surface.fill((255, 255, 255))
+                flash_surface.set_alpha(150)
+                boss_image = self.image.copy()
+                boss_image.blit(flash_surface, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
+            
+            image_x = self.x
+            image_y = float_y
+            screen.blit(boss_image, (image_x, image_y))
+        else:
+            # Dibujo de respaldo (círculo simple)
+            core_center_x = int(self.x + self.image_width // 2)
+            core_center_y = int(float_y + self.image_height // 2)
+            pygame.draw.circle(screen, (0, 0, 0), (core_center_x, core_center_y), self.image_width // 2)
+        
+        # Dibujar barra de salud
+        self.draw_health(screen)
+    
+    def draw_health(self, screen):
+        """Dibujar barra de salud del jefe"""
+        bar_width = 200
+        bar_height = 20
+        bar_x = self.x - 25
+        bar_y = self.y - 40
+        
+        # Fondo
+        pygame.draw.rect(screen, (50, 50, 50), (bar_x, bar_y, bar_width, bar_height))
+        
+        # Salud (con efecto de gradiente)
+        health_width = int((self.health / self.max_health) * bar_width)
+        for i in range(health_width):
+            progress = i / bar_width
+            color_value = int(50 + progress * 100)
+            pygame.draw.rect(screen, (color_value, color_value, color_value), 
+                           (bar_x + i, bar_y, 1, bar_height))
+        
+        # Borde
+        pygame.draw.rect(screen, (150, 150, 150), (bar_x, bar_y, bar_width, bar_height), 3)
+        
+        # Segmentos para interés visual
+        segment_count = 10
+        for i in range(1, segment_count):
+            segment_x = bar_x + (bar_width // segment_count) * i
+            pygame.draw.line(screen, (100, 100, 100), 
+                           (segment_x, bar_y), (segment_x, bar_y + bar_height), 2)
+    
+    def get_rect(self):
+        """Obtener rectángulo del núcleo del jefe para colisiones"""
+        return pygame.Rect(self.x, self.y, self.image_width, self.image_height)
+    
+    def get_all_attack_rects(self):
+        """Obtener todos los rectángulos de ataque - el jefe ataca con todo su cuerpo"""
+        # El jefe ya no tiene rectángulos de ataque separados
+        # La animación de video en sí misma representa el ataque
+        return []
+
