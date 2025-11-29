@@ -56,7 +56,10 @@ class Player:
     def shoot(self):
         """Disparar un proyectil"""
         if self.shoot_cooldown <= 0:
-            projectile = Projectile(self.x + self.width, self.y + self.height // 2)
+            # Puedes ajustar el tamaño del proyectil aquí
+            projectile_width = 20
+            projectile_height = 10
+            projectile = Projectile(self.x + self.width, self.y + self.height // 2, projectile_width, projectile_height)
             self.projectiles.append(projectile)
             self.shoot_cooldown = 20  # Frames de enfriamiento
             return True
@@ -217,11 +220,11 @@ class Player:
 
 
 class Projectile:
-    def __init__(self, x, y):
+    def __init__(self, x, y, width=10, height=5):
         self.x = x
         self.y = y
-        self.width = 10
-        self.height = 5
+        self.width = width
+        self.height = height
         self.speed = 10
         self.color = (0, 0, 0)  # Proyectil negro
     

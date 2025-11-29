@@ -34,8 +34,10 @@ class Level1_2(Level):
         # Configuración de pinchos por cada golpe (índices de plataformas)
         # Debe coincidir con el número de boss_impact_frames
         self.spike_platforms = [
-            [1, 4, 5],      # Frame 1
-            [3, 2]         # Frame 35
+            [1, 4, 5],      
+            [2, 3],
+            [1, 3, 4],
+            [1, 5]
         ]
         self.spike_duration = 60 # Duración de los pinchos
         
@@ -75,7 +77,7 @@ class Level1_2(Level):
             # Verificar colisiones de proyectiles con el núcleo del jefe
             for projectile in self.player.projectiles[:]:
                 if projectile.get_rect().colliderect(self.boss.get_rect()):
-                    self.boss.take_damage(10)
+                    self.boss.take_damage(0.5)
                     self.player.projectiles.remove(projectile)
         else:
             # Jefe derrotado

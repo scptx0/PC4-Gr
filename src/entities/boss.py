@@ -18,6 +18,12 @@ class Boss:
     HITBOX_HEIGHT = 250
     HITBOX_OFFSET_Y = -20
 
+    # Constantes de hitbox de golpe fatal
+    KILL_HITBOX_WIDTH = 100
+    KILL_HITBOX_HEIGHT = 300
+    KILL_HITBOX_OFFSET_X = -325
+    KILL_HITBOX_OFFSET_Y = 45
+
     def __init__(self, x, y):
         # Cargar frames de animación del jefe
         self.x = x
@@ -80,6 +86,9 @@ class Boss:
         self.float_offset = 0
         self.float_speed = 0.05
         
+        # Frames donde el hitbox de muerte está activo
+        self.kill_frames = [35, 118, 206]
+        
     def update(self, player):
         """Actualizar IA y comportamiento del jefe"""
         # Actualizar aturdimiento
@@ -100,8 +109,8 @@ class Boss:
     def take_damage(self, damage):
         """Recibir daño de un proyectil"""
         self.health -= damage
-        if self.health < 0:
-            self.health = 0
+        if self.health < 1:
+            self.health = 1
     
     def stun(self, duration=60):
         """Aturdir al jefe"""
@@ -145,6 +154,11 @@ class Boss:
         # Dibujar hitbox
         # hitbox_rect = self.get_rect()
         # pygame.draw.rect(screen, (255, 0, 0), hitbox_rect, 2)
+        
+        # Dibujar hitbox de muerte (debug)
+        # kill_rects = self.get_all_attack_rects()
+        # for r in kill_rects:
+        #     pygame.draw.rect(screen, (255, 0, 255), r, 2)
 
         # Dibujar barra de salud
         self.draw_health(screen)
@@ -191,8 +205,17 @@ class Boss:
         return rect
     
     def get_all_attack_rects(self):
-        """Obtener todos los rectángulos de ataque - el jefe ataca con todo su cuerpo"""
-        # El jefe ya no tiene rectángulos de ataque separados
-        # La animación de video en sí misma representa el ataque
+        """Obtener todos los rectángulos de ataque"""
+        if self.using_animation and self.current_frame in self.kill_frames:
+            center_x = self.VISUAL_X + self.VISUAL_WIDTH // 2
+            center_y = self.VISUAL_Y + self.VISUAL_HEIGHT // 2
+            
+            kill_center_x = center_x + self.KILL_HITBOX_OFFSET_X
+            kill_center_y = center_y + self.KILL_HITBOX_OFFSET_Y
+            
+            rect = pygame.Rect(0, 0, self.KILL_HITBOX_WIDTH, self.KILL_HITBOX_HEIGHT)
+            rect.center = (kill_center_x, kill_center_y)
+            return [rect]
+            
         return []
 
