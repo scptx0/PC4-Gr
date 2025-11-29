@@ -69,7 +69,7 @@ class Level:
     
     def draw_hint(self, screen):
         """Dibujar mensaje de pista en la parte superior de la pantalla"""
-        font = pygame.font.Font(None, 28)
+        font = pygame.font.Font('assets/fonts/TurretRoad-Medium.ttf', 22)
         text = font.render(self.hint_message, True, (0, 0, 0))  # Texto negro
         text_rect = text.get_rect(center=(self.screen_width // 2, 40))
         

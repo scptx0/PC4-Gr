@@ -154,7 +154,7 @@ class Game:
         """Dibujar pantalla de transición"""
         self.screen.fill((255, 255, 255))  # Fondo blanco
         
-        font = pygame.font.Font(None, 48)
+        font = pygame.font.Font('assets/fonts/TurretRoad-Medium.ttf', 42)
         text = font.render(self.transition_message, True, (0, 0, 0))
         text_rect = text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
         self.screen.blit(text, text_rect)
@@ -172,18 +172,18 @@ class Game:
         self.screen.blit(overlay, (0, 0))
         
         # Texto de Game Over
-        font_large = pygame.font.Font(None, 72)
+        font_large = pygame.font.Font('assets/fonts/TurretRoad-ExtraBold.ttf', 72)
         text = font_large.render("GAME OVER", True, (0, 0, 0))
         text_rect = text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 50))
         self.screen.blit(text, text_rect)
         
         # Instrucciones
-        font_small = pygame.font.Font(None, 32)
+        font_small = pygame.font.Font('assets/fonts/TurretRoad-Medium.ttf', 32)
         restart_text = font_small.render("ENTER - Reintentar", True, (0, 0, 0))
         restart_rect = restart_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 30))
         self.screen.blit(restart_text, restart_rect)
         
-        menu_text = font_small.render("ESC - Menú", True, (0, 0, 0))
+        menu_text = font_small.render("ESC - Menu", True, (0, 0, 0))
         menu_rect = menu_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 70))
         self.screen.blit(menu_text, menu_rect)
     
