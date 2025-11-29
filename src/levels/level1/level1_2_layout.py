@@ -32,3 +32,8 @@ def get_player_start():
 def get_hint_message():
     """Devolver mensaje de pista para este nivel"""
     return ""
+
+def get_goal_position():
+    """Devolver posición y tamaño de la meta (x, y, width, height)"""
+    # Meta en el extremo derecho, detrás del jefe
+    return (980, 0, 40, 600)

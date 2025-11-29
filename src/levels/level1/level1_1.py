@@ -79,3 +79,7 @@ class Level1_1(Level):
         
         # Pista (sin sacudida)
         super().draw(screen)
+
+    def get_transition_message(self):
+        """Mensaje personalizado al completar el nivel"""
+        return "Si, un jefe en el primer nivel"

@@ -29,7 +29,11 @@ class Level1_2(Level):
         self.boss_shake_intensity = 30  # Intensidad de la sacudida (mayor = más fuerte)
         self.boss_shake_duration = 15   # Duración de la sacudida en frames
         
-        # Partículas y Pinchos
+        # Meta (Zona de escape)
+        goal_data = level1_2_layout.get_goal_position()
+        self.goal = pygame.Rect(goal_data[0], goal_data[1], goal_data[2], goal_data[3])
+        
+        # Partículas de impacto
         self.particles = []
         self.particles = []
         self.spikes = []
@@ -59,9 +63,14 @@ class Level1_2(Level):
         super().update()
         self.player.update(self.platforms, self.screen_width, self.screen_height)
         
-        if self.boss.is_alive():
-            self.boss.update(self.player)
+        # Verificar si el jugador alcanzó la meta (escapó)
+        if self.player.get_rect().colliderect(self.goal):
+            self.completed = True
             
+        # Actualizar jefe
+        self.boss.update(self.player)
+            
+        if self.boss.is_alive():
             # Coordinar sacudida con animación del jefe
             if self.boss.using_animation:
                 # Depuración: Imprimir frame actual para ayudar al usuario a encontrar el frame de impacto
@@ -207,3 +216,7 @@ class Level1_2(Level):
         
         # Pista (sin sacudida)
         super().draw(screen)
+
+    def get_transition_message(self):
+        """Mensaje personalizado al completar el nivel"""
+        return "Simple, no?"

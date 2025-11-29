@@ -48,4 +48,4 @@ def get_player_start():
 
 def get_hint_message():
     """Devolver mensaje de pista para este nivel"""
-    return "Usa WASD para moverte y CTRL para activar tu poder."
+    return "Un cazador sabio no dispara a cada sombra del bosque"

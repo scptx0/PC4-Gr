@@ -1,6 +1,7 @@
 import pygame
 import sys
 from levels.level1 import Level1_1, Level1_2
+from utils import save_manager
 
 # Inicializar Pygame
 pygame.init()
@@ -17,28 +18,55 @@ BLACK = (0, 0, 0)
 # Secuencia de niveles
 LEVEL_SEQUENCE = [Level1_1, Level1_2]
 
+# Grupos de niveles (Capítulos)
+# Nivel 1 tiene dos partes: 1.1 y 1.2
+LEVEL_GROUPS = [
+    [Level1_1, Level1_2],
+    # Aquí iría el Nivel 2: [Level2_1, ...]
+]
+
 class Game:
     def __init__(self):
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-        pygame.display.set_caption("Meta-Puzzle Platformer - Nivel 1")
+        pygame.display.set_caption("Meta-Puzzle Platformer")
         self.clock = pygame.time.Clock()
         self.running = True
-        self.state = "MENU"  # MENU, PLAYING, TRANSITION, GAME_OVER, WIN
+        self.state = "MENU"  # MENU, LEVEL_SELECT, PLAYING, TRANSITION, GAME_OVER
         self.current_level = None
-        self.level_index = 0
+        self.current_group_index = 0
+        self.current_level_index_in_group = 0
         self.transition_timer = 0
         self.transition_message = ""
         
-    def start_level(self, level_index):
-        """Iniciar un nivel específico"""
-        self.level_index = level_index
+        # Cargar progreso
+        self.max_unlocked_level = save_manager.load_progress()
         
-        if 0 <= level_index < len(LEVEL_SEQUENCE):
-            level_class = LEVEL_SEQUENCE[level_index]
-            self.current_level = level_class(SCREEN_WIDTH, SCREEN_HEIGHT)
+    def start_level_group(self, group_index):
+        """Iniciar un grupo de niveles (Capítulo)"""
+        if 0 <= group_index < len(LEVEL_GROUPS):
+            self.current_group_index = group_index
+            self.current_level_index_in_group = 0
+            self.load_current_level()
             self.state = "PLAYING"
+            
+    def load_current_level(self):
+        """Cargar el nivel actual dentro del grupo"""
+        group = LEVEL_GROUPS[self.current_group_index]
+        if self.current_level_index_in_group < len(group):
+            level_class = group[self.current_level_index_in_group]
+            self.current_level = level_class(SCREEN_WIDTH, SCREEN_HEIGHT)
         else:
-            self.state = "WIN"
+            # Grupo completado
+            self.complete_level_group()
+
+    def complete_level_group(self):
+        """Manejar la finalización de un grupo de niveles"""
+        # Desbloquear siguiente nivel
+        next_level = self.current_group_index + 2 # +1 por índice 0, +1 para el siguiente
+        save_manager.save_progress(next_level)
+        self.max_unlocked_level = save_manager.load_progress()
+        
+        self.state = "LEVEL_SELECT"
     
     def show_transition(self, message, duration=120):
         """Mostrar pantalla de transición"""
@@ -52,31 +80,68 @@ class Game:
             if event.type == pygame.QUIT:
                 self.running = False
             
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_pos = pygame.mouse.get_pos()
+                
+                if self.state == "MENU":
+                    # Botón JUGAR
+                    play_rect = pygame.Rect(SCREEN_WIDTH // 2 - 100, 300, 200, 60)
+                    if play_rect.collidepoint(mouse_pos):
+                        self.state = "LEVEL_SELECT"
+                
+                elif self.state == "LEVEL_SELECT":
+                    # Botones de niveles (Grid)
+                    cols = 4
+                    btn_size = 80
+                    gap = 20
+                    
+                    # Calcular inicio X para centrar
+                    total_width = cols * btn_size + (cols - 1) * gap
+                    start_x = (SCREEN_WIDTH - total_width) // 2
+                    start_y = 250
+                    
+                    # Mostrar 12 niveles en el grid (3 filas de 4)
+                    for i in range(12):
+                        row = i // cols
+                        col = i % cols
+                        
+                        x = start_x + col * (btn_size + gap)
+                        y = start_y + row * (btn_size + gap)
+                        
+                        btn_rect = pygame.Rect(x, y, btn_size, btn_size)
+                        
+                        if btn_rect.collidepoint(mouse_pos):
+                            # Solo permitir click si está desbloqueado y existe
+                            if i + 1 <= self.max_unlocked_level and i < len(LEVEL_GROUPS):
+                                self.start_level_group(i)
+            
             if event.type == pygame.KEYDOWN:
                 if self.state == "MENU":
                     if event.key == pygame.K_RETURN:
-                        self.start_level(0)
+                        self.state = "LEVEL_SELECT"
+                
+                elif self.state == "LEVEL_SELECT":
+                    if event.key == pygame.K_ESCAPE:
+                        self.state = "MENU"
                 
                 elif self.state == "PLAYING":
                     # Disparar con tecla CTRL
                     if event.key == pygame.K_LCTRL or event.key == pygame.K_RCTRL:
                         if self.current_level and self.current_level.player:
                             self.current_level.player.shoot()
+                    elif event.key == pygame.K_ESCAPE:
+                        self.state = "MENU" # Pausa / Salir al menú
                 
                 elif self.state == "GAME_OVER":
                     if event.key == pygame.K_RETURN:
-                        # Si es el mismo nivel, usamos reset() para optimizar
-                        if self.current_level and self.level_index < len(LEVEL_SEQUENCE) and isinstance(self.current_level, LEVEL_SEQUENCE[self.level_index]):
+                        # Reiniciar nivel actual dentro del grupo
+                        if self.current_level:
                             self.current_level.reset()
                             self.state = "PLAYING"
-                        else:
-                            self.start_level(self.level_index)  # Fallback a recarga completa
                     elif event.key == pygame.K_ESCAPE:
-                        self.state = "MENU"
+                        self.state = "LEVEL_SELECT"
                 
-                elif self.state == "WIN":
-                    if event.key == pygame.K_RETURN:
-                        self.state = "MENU"
+
     
     def update(self):
         """Actualizar estado del juego"""
@@ -89,17 +154,15 @@ class Game:
                 
                 self.current_level.update()
                 
-                # Verificar finalización del nivel
                 if self.current_level.completed:
-                    # Mensaje de transición personalizado según el nivel
-                    if isinstance(self.current_level, Level1_1):
-                        self.show_transition("Si, un jefe en el nivel 1", 120)
-                    else:
-                        # Por defecto, avanzar al siguiente nivel
-                        if self.level_index + 1 >= len(LEVEL_SEQUENCE):
-                            self.state = "WIN"
-                        else:
-                            self.show_transition(f"Nivel {self.level_index + 2}", 120)
+                    # Obtener mensaje personalizado del nivel
+                    msg = self.current_level.get_transition_message()
+                    
+                    # Avanzar al siguiente nivel dentro del grupo
+                    self.current_level_index_in_group += 1
+                    
+                    # Mostrar transición siempre
+                    self.show_transition(msg, 120)
                 
                 # Verificar muerte del jugador
                 if hasattr(self.current_level, 'player') and not self.current_level.player.is_alive():
@@ -108,12 +171,21 @@ class Game:
         elif self.state == "TRANSITION":
             self.transition_timer -= 1
             if self.transition_timer <= 0:
-                self.start_level(self.level_index + 1)
+                # Verificar si quedan niveles en el grupo
+                group = LEVEL_GROUPS[self.current_group_index]
+                if self.current_level_index_in_group < len(group):
+                    self.load_current_level()
+                    self.state = "PLAYING"
+                else:
+                    # Grupo completado
+                    self.complete_level_group()
     
     def draw(self):
         """Dibujar juego"""
         if self.state == "MENU":
             self.draw_menu()
+        elif self.state == "LEVEL_SELECT":
+            self.draw_level_select()
         elif self.state == "PLAYING":
             if self.current_level:
                 self.current_level.draw(self.screen)
@@ -121,8 +193,7 @@ class Game:
             self.draw_transition()
         elif self.state == "GAME_OVER":
             self.draw_game_over()
-        elif self.state == "WIN":
-            self.draw_win()
+
         
         pygame.display.flip()
     
@@ -131,34 +202,105 @@ class Game:
         self.screen.fill((255, 255, 255))  # Fondo blanco
         
         # Título
-        font_title = pygame.font.Font(None, 64)
-        title = font_title.render("Meta-Puzzle Platformer", True, (0, 0, 0))
+        font_title = pygame.font.Font('assets/fonts/TurretRoad-ExtraBold.ttf', 64)
+        title = font_title.render("Break the pattern", True, (0, 0, 0))
         title_rect = title.get_rect(center=(SCREEN_WIDTH // 2, 150))
         self.screen.blit(title, title_rect)
         
-        # Subtítulo
-        font_subtitle = pygame.font.Font(None, 36)
-        subtitle = font_subtitle.render("Nivel 1: El Jefe Gigante", True, (0, 0, 0))
-        subtitle_rect = subtitle.get_rect(center=(SCREEN_WIDTH // 2, 220))
-        self.screen.blit(subtitle, subtitle_rect)
+        font_subtitle = pygame.font.Font('assets/fonts/TurretRoad-Medium.ttf', 36)
         
-        # Instrucciones
-        font_text = pygame.font.Font(None, 28)
-        instructions = [
-            "Presiona ENTER para comenzar",
-            "",
-            "Controles:",
-            "Flechas o WASD - Mover",
-            "Espacio/W/Flecha Arriba - Saltar",
-            "CTRL - Disparar",
-        ]
+        # Botón JUGAR
+        play_rect = pygame.Rect(SCREEN_WIDTH // 2 - 100, 300, 200, 60)
+        mouse_pos = pygame.mouse.get_pos()
         
-        y = 300
-        for line in instructions:
-            text = font_text.render(line, True, (0, 0, 0))
-            text_rect = text.get_rect(center=(SCREEN_WIDTH // 2, y))
+        # Hover effect
+        color = (0, 0, 0) if play_rect.collidepoint(mouse_pos) else (50, 50, 50)
+        pygame.draw.rect(self.screen, color, play_rect)
+        
+        play_text = font_subtitle.render("JUGAR", True, (255, 255, 255))
+        play_text_rect = play_text.get_rect(center=play_rect.center)
+        self.screen.blit(play_text, play_text_rect)
+        
+        # Controles
+        font_small = pygame.font.Font('assets/fonts/TurretRoad-Medium.ttf', 20)
+        controls = "WASD: Mover/Saltar | CTRL: Habilidad (solo si está disponible)"
+        controls_text = font_small.render(controls, True, (150, 150, 150))
+        controls_rect = controls_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT - 50))
+        self.screen.blit(controls_text, controls_rect)
+
+    def draw_level_select(self):
+        """Dibujar pantalla de selección de niveles"""
+        self.screen.fill((20, 20, 20))  # Fondo oscuro
+        
+        font_title = pygame.font.Font('assets/fonts/TurretRoad-ExtraBold.ttf', 48)
+        title = font_title.render("SELECCIONAR NIVEL", True, (255, 255, 255))
+        title_rect = title.get_rect(center=(SCREEN_WIDTH // 2, 100))
+        self.screen.blit(title, title_rect)
+        
+        font_num = pygame.font.Font('assets/fonts/TurretRoad-ExtraBold.ttf', 32)
+        
+        # Configuración del Grid
+        cols = 4
+        btn_size = 80
+        gap = 20
+        
+        # Calcular inicio X para centrar
+        total_width = cols * btn_size + (cols - 1) * gap
+        start_x = (SCREEN_WIDTH - total_width) // 2
+        start_y = 250
+        
+        mouse_pos = pygame.mouse.get_pos()
+        
+        # Mostrar 12 niveles en el grid (placeholder para futuros niveles)
+        for i in range(12):
+            level_num = i + 1
+            row = i // cols
+            col = i % cols
+            
+            x = start_x + col * (btn_size + gap)
+            y = start_y + row * (btn_size + gap)
+            
+            btn_rect = pygame.Rect(x, y, btn_size, btn_size)
+            
+            is_unlocked = level_num <= self.max_unlocked_level
+            is_existing = i < len(LEVEL_GROUPS)
+            
+            # Lógica de colores
+            if is_unlocked:
+                if is_existing:
+                    # Nivel desbloqueado y jugable
+                    if btn_rect.collidepoint(mouse_pos):
+                        color = (255, 255, 255)
+                        text_color = (0, 0, 0)
+                    else:
+                        color = (50, 50, 50)
+                        text_color = (255, 255, 255)
+                    border_color = (255, 255, 255)
+                else:
+                    # Nivel desbloqueado pero no implementado (placeholder)
+                    color = (30, 30, 30)
+                    text_color = (100, 100, 100)
+                    border_color = (50, 50, 50)
+            else:
+                # Nivel bloqueado
+                color = (10, 10, 10)
+                text_color = (40, 40, 40)
+                border_color = (30, 30, 30)
+            
+            # Dibujar botón
+            pygame.draw.rect(self.screen, color, btn_rect)
+            pygame.draw.rect(self.screen, border_color, btn_rect, 2)
+            
+            # Dibujar número
+            text = font_num.render(str(level_num), True, text_color)
+            text_rect = text.get_rect(center=btn_rect.center)
             self.screen.blit(text, text_rect)
-            y += 35
+            
+        # Volver
+        font_small = pygame.font.Font('assets/fonts/TurretRoad-Medium.ttf', 20)
+        back_text = font_small.render("ESC - Volver al Menú", True, (150, 150, 150))
+        back_rect = back_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT - 50))
+        self.screen.blit(back_text, back_rect)
     
     def draw_transition(self):
         """Dibujar pantalla de transición"""
@@ -197,27 +339,7 @@ class Game:
         menu_rect = menu_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 70))
         self.screen.blit(menu_text, menu_rect)
     
-    def draw_win(self):
-        """Dibujar pantalla de victoria"""
-        self.screen.fill((255, 255, 255))  # Fondo blanco
-        
-        # Texto de victoria
-        font_large = pygame.font.Font(None, 72)
-        text = font_large.render("¡NIVEL 1 COMPLETADO!", True, (0, 0, 0))
-        text_rect = text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 50))
-        self.screen.blit(text, text_rect)
-        
-        # Mensaje
-        font_medium = pygame.font.Font(None, 36)
-        msg = font_medium.render("Has derrotado al jefe gigante", True, (0, 0, 0))
-        msg_rect = msg.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 20))
-        self.screen.blit(msg, msg_rect)
-        
-        # Instrucciones
-        font_small = pygame.font.Font(None, 28)
-        continue_text = font_small.render("ENTER - Volver al menú", True, (0, 0, 0))
-        continue_rect = continue_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 80))
-        self.screen.blit(continue_text, continue_rect)
+
     
     def run(self):
         """Bucle principal del juego"""

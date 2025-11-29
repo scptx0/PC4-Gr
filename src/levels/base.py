@@ -12,7 +12,7 @@ class Level:
         self.completed = False
         self.hint_message = ""
         self.show_hint = True
-        self.hint_timer = 180  # Mostrar pista por 3 segundos
+        self.hint_timer = 300  # Mostrar pista por 3 segundos
         
         # Efecto de sacudida de pantalla
         self.shake_offset_x = 0
@@ -150,3 +150,7 @@ class Level:
         # Dibujar texto
         text_rect = text.get_rect(midleft=(text_x, bg_rect.centery))
         screen.blit(text, text_rect)
+
+    def get_transition_message(self):
+        """Mensaje por defecto al completar el nivel"""
+        return "NIVEL COMPLETADO"
