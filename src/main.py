@@ -65,7 +65,12 @@ class Game:
                 
                 elif self.state == "GAME_OVER":
                     if event.key == pygame.K_RETURN:
-                        self.start_level(self.level_index)  # Reiniciar nivel actual
+                        # Si es el mismo nivel, usamos reset() para optimizar
+                        if self.current_level and isinstance(self.current_level, (Level1_1, Level1_2)):
+                            self.current_level.reset()
+                            self.state = "PLAYING"
+                        else:
+                            self.start_level(self.level_index)  # Fallback a recarga completa
                     elif event.key == pygame.K_ESCAPE:
                         self.state = "MENU"
                 

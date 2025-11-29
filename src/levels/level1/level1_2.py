@@ -41,6 +41,17 @@ class Level1_2(Level):
         ]
         self.spike_duration = 60 # Duración de los pinchos
         
+    def reset(self):
+        """Reiniciar nivel"""
+        super().reset()
+        player_x, player_y = level1_2_layout.get_player_start()
+        self.player.reset(player_x, player_y)
+        self.boss.reset()
+        self.particles = []
+        self.spikes = []
+        self.shake_timer = 999999
+        self.last_boss_frame = -1
+        
     def update(self):
         """Actualizar nivel"""
         super().update()

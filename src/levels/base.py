@@ -21,6 +21,15 @@ class Level:
         self.shake_duration = 0
         self.shake_timer = 100  # Intervalo aleatorio entre sacudidas (3-7 segundos)
         
+    def reset(self):
+        """Reiniciar nivel - para ser sobrescrito"""
+        self.completed = False
+        self.shake_offset_x = 0
+        self.shake_offset_y = 0
+        self.shake_intensity = 1
+        self.shake_duration = 0
+        self.shake_timer = 100
+        
     def update(self):
         """Actualizar nivel - para ser sobrescrito"""
         if self.hint_timer > 0:

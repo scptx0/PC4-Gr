@@ -116,6 +116,12 @@ class Boss:
         """Aturdir al jefe"""
         self.stun_duration = duration
     
+    def reset(self):
+        """Reiniciar estado del jefe"""
+        self.health = self.max_health
+        self.stun_duration = 0
+        # No reiniciamos la animación para que sea fluido
+    
     def is_alive(self):
         """Verificar si el jefe está vivo"""
         return self.health > 0

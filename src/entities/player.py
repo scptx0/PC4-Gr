@@ -210,6 +210,19 @@ class Player:
         if self.health < 0:
             self.health = 0
     
+    def reset(self, x, y):
+        """Reiniciar estado del jugador"""
+        self.x = x
+        self.y = y
+        self.health = self.max_health
+        self.vel_x = 0
+        self.vel_y = 0
+        self.projectiles = []
+        self.shoot_cooldown = 0
+        self.facing_direction = 1
+        self.squash_amount = 0.0
+        self.target_squash = 0.0
+        
     def is_alive(self):
         """Verificar si el jugador está vivo"""
         return self.health > 0
