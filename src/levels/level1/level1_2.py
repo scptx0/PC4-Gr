@@ -76,7 +76,6 @@ class Level1_2(Level):
             for projectile in self.player.projectiles[:]:
                 if projectile.get_rect().colliderect(self.boss.get_rect()):
                     self.boss.take_damage(10)
-                    self.boss.stun(60)  # Aturdir por 1 segundo
                     self.player.projectiles.remove(projectile)
         else:
             # Jefe derrotado

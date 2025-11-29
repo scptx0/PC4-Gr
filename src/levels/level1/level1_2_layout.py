@@ -31,4 +31,4 @@ def get_player_start():
 
 def get_hint_message():
     """Devolver mensaje de pista para este nivel"""
-    return "El jefe solo puede atacar desde arriba. ¡Pasa por debajo de sus piernas! Usa CTRL para disparar y aturdirlo."
+    return ""

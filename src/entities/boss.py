@@ -115,13 +115,7 @@ class Boss:
             # Dibujar frame de animación actual
             current_image = self.animation_frames[self.current_frame]
             
-            # Parpadear en blanco cuando está aturdido
-            if self.stun_duration > 0 and (self.stun_duration // 5) % 2 == 0:
-                flash_surface = pygame.Surface((self.image_width, self.image_height))
-                flash_surface.fill((255, 255, 255))
-                flash_surface.set_alpha(150)
-                current_image = current_image.copy()
-                current_image.blit(flash_surface, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
+            # (Efecto de parpadeo eliminado)
             
             # Dibujar en posición visual absoluta
             image_x = self.VISUAL_X
@@ -132,12 +126,7 @@ class Boss:
             # Dibujar imagen estática
             boss_image = self.image
             
-            if self.stun_duration > 0 and (self.stun_duration // 5) % 2 == 0:
-                flash_surface = pygame.Surface((self.image_width, self.image_height))
-                flash_surface.fill((255, 255, 255))
-                flash_surface.set_alpha(150)
-                boss_image = self.image.copy()
-                boss_image.blit(flash_surface, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
+            # (Efecto de parpadeo eliminado)
             
             image_x = self.VISUAL_X
             image_y = float_y
@@ -153,31 +142,33 @@ class Boss:
     
     def draw_health(self, screen):
         """Dibujar barra de salud del jefe"""
-        bar_width = 200
-        bar_height = 20
-        bar_x = self.x - 25
-        bar_y = self.y - 40
+        screen_width = screen.get_width()
+        bar_width = 400
+        bar_height = 10
+        bar_x = (screen_width - bar_width) // 2
+        bar_y = 50
+        border_width = 2
+
+        # Dibujar texto "Jefe"
+        font = pygame.font.Font('assets/fonts/TurretRoad-Medium.ttf', 24)
+        text = font.render("Jefe", True, (0, 0, 0))
+        text_rect = text.get_rect(center=(screen_width // 2, bar_y - 15))
+        screen.blit(text, text_rect)
         
         # Fondo
-        pygame.draw.rect(screen, (50, 50, 50), (bar_x, bar_y, bar_width, bar_height))
+        pygame.draw.rect(screen, (255, 255, 255), (bar_x, bar_y, bar_width, bar_height))
         
         # Salud (con efecto de gradiente)
-        health_width = int((self.health / self.max_health) * bar_width)
-        for i in range(health_width):
-            progress = i / bar_width
-            color_value = int(50 + progress * 100)
-            pygame.draw.rect(screen, (color_value, color_value, color_value), 
-                           (bar_x + i, bar_y, 1, bar_height))
+        if self.max_health > 0:
+            health_width = int((self.health / self.max_health) * bar_width)
+        else:
+            health_width = 0
+            
+        # Barra de vida negra
+        pygame.draw.rect(screen, (0, 0, 0), (bar_x, bar_y, health_width, bar_height))
         
         # Borde
-        pygame.draw.rect(screen, (150, 150, 150), (bar_x, bar_y, bar_width, bar_height), 3)
-        
-        # Segmentos para interés visual
-        segment_count = 10
-        for i in range(1, segment_count):
-            segment_x = bar_x + (bar_width // segment_count) * i
-            pygame.draw.line(screen, (100, 100, 100), 
-                           (segment_x, bar_y), (segment_x, bar_y + bar_height), 2)
+        pygame.draw.rect(screen, (0, 0, 0), (bar_x, bar_y, bar_width, bar_height), border_width)
     
     def get_rect(self):
         """Obtener rectángulo del núcleo del jefe para colisiones"""
