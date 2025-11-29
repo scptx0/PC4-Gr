@@ -5,6 +5,14 @@ import os
 import glob
 
 class Boss:
+    # Constantes de tamaño visual
+    VISUAL_WIDTH = 950
+    VISUAL_HEIGHT = 475
+    
+    # Constantes de posición visual
+    VISUAL_X = 250
+    VISUAL_Y = 60
+
     def __init__(self, x, y):
         # Cargar frames de animación del jefe
         self.x = x
@@ -27,7 +35,7 @@ class Boss:
                 for frame_file in frame_files:
                     frame = pygame.image.load(frame_file).convert_alpha()
                     # Escalar frames a tamaño más grande (más ancho)
-                    scaled_frame = pygame.transform.scale(frame, (880, 500))
+                    scaled_frame = pygame.transform.scale(frame, (self.VISUAL_WIDTH, self.VISUAL_HEIGHT))
                     self.animation_frames.append(scaled_frame)
                 
                 self.using_animation = True
@@ -100,8 +108,8 @@ class Boss:
     
     def draw(self, screen):
         """Dibujar al jefe"""
-        # Calcular posición de flotación
-        float_y = self.y + math.sin(self.float_offset) * 10
+        # Calcular posición de flotación usando la posición visual base
+        float_y = self.VISUAL_Y + math.sin(self.float_offset) * 10
         
         if self.using_animation:
             # Dibujar frame de animación actual
@@ -115,8 +123,8 @@ class Boss:
                 current_image = current_image.copy()
                 current_image.blit(flash_surface, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
             
-            # Dibujar centrado
-            image_x = self.x
+            # Dibujar en posición visual absoluta
+            image_x = self.VISUAL_X
             image_y = float_y
             screen.blit(current_image, (image_x, image_y))
             
@@ -131,7 +139,7 @@ class Boss:
                 boss_image = self.image.copy()
                 boss_image.blit(flash_surface, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
             
-            image_x = self.x
+            image_x = self.VISUAL_X
             image_y = float_y
             screen.blit(boss_image, (image_x, image_y))
         else:
