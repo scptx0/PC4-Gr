@@ -23,7 +23,7 @@ class Level1_2(Level):
         self.last_boss_frame = -1
         
         # Configuración de sacudida del jefe
-        self.boss_impact_frames = [20, 100]  # Lista de frames donde ocurre el "golpe"
+        self.boss_impact_frames = [1, 35, 74, 118, 162, 206, 250]  # Lista de frames donde ocurre el "golpe"
         self.boss_shake_intensity = 30  # Intensidad de la sacudida (mayor = más fuerte)
         self.boss_shake_duration = 15   # Duración de la sacudida en frames
         
@@ -110,12 +110,13 @@ class Level1_2(Level):
         shake_x, shake_y = self.get_shake_offset()
         
         # Dibujar todo normalmente
-        for platform in self.platforms:
-            platform.draw(screen)
-        
         if self.boss.is_alive():
             self.boss.draw(screen)
-        else:
+
+        for platform in self.platforms:
+            platform.draw(screen)
+            
+        if not self.boss.is_alive():
             # Mensaje de victoria
             font = pygame.font.Font(None, 72)
             text = font.render("¡VICTORIA!", True, (0, 0, 0))
