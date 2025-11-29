@@ -14,6 +14,9 @@ FPS = 60
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 
+# Secuencia de niveles
+LEVEL_SEQUENCE = [Level1_1, Level1_2]
+
 class Game:
     def __init__(self):
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -30,15 +33,12 @@ class Game:
         """Iniciar un nivel específico"""
         self.level_index = level_index
         
-        if level_index == 0:
-            self.current_level = Level1_1(SCREEN_WIDTH, SCREEN_HEIGHT)
-        elif level_index == 1:
-            self.current_level = Level1_2(SCREEN_WIDTH, SCREEN_HEIGHT)
+        if 0 <= level_index < len(LEVEL_SEQUENCE):
+            level_class = LEVEL_SEQUENCE[level_index]
+            self.current_level = level_class(SCREEN_WIDTH, SCREEN_HEIGHT)
+            self.state = "PLAYING"
         else:
             self.state = "WIN"
-            return
-        
-        self.state = "PLAYING"
     
     def show_transition(self, message, duration=120):
         """Mostrar pantalla de transición"""
@@ -66,7 +66,7 @@ class Game:
                 elif self.state == "GAME_OVER":
                     if event.key == pygame.K_RETURN:
                         # Si es el mismo nivel, usamos reset() para optimizar
-                        if self.current_level and isinstance(self.current_level, (Level1_1, Level1_2)):
+                        if self.current_level and self.level_index < len(LEVEL_SEQUENCE) and isinstance(self.current_level, LEVEL_SEQUENCE[self.level_index]):
                             self.current_level.reset()
                             self.state = "PLAYING"
                         else:
@@ -91,10 +91,15 @@ class Game:
                 
                 # Verificar finalización del nivel
                 if self.current_level.completed:
+                    # Mensaje de transición personalizado según el nivel
                     if isinstance(self.current_level, Level1_1):
                         self.show_transition("Si, un jefe en el nivel 1", 120)
-                    elif isinstance(self.current_level, Level1_2):
-                        self.state = "WIN"
+                    else:
+                        # Por defecto, avanzar al siguiente nivel
+                        if self.level_index + 1 >= len(LEVEL_SEQUENCE):
+                            self.state = "WIN"
+                        else:
+                            self.show_transition(f"Nivel {self.level_index + 2}", 120)
                 
                 # Verificar muerte del jugador
                 if hasattr(self.current_level, 'player') and not self.current_level.player.is_alive():
