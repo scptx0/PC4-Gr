@@ -31,6 +31,13 @@ class Level1_1(Level):
         self.shake_interval_max = 100  # Frames máximos entre sacudidas (10 segundos)
         self.shake_timer = random.randint(self.shake_interval_min, self.shake_interval_max)
         
+    def reset(self):
+        """Reiniciar nivel"""
+        super().reset()
+        player_x, player_y = level1_1_layout.get_player_start()
+        self.player.reset(player_x, player_y)
+        self.shake_timer = random.randint(self.shake_interval_min, self.shake_interval_max)
+        
     def update(self):
         """Actualizar nivel"""
         super().update()
