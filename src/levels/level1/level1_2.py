@@ -1,7 +1,7 @@
 import pygame
 import random
 from ..base import Level
-from entities import Player, Boss, Particle
+from entities import Player, Boss, Particle, Spike
 import levels.level1.level1_2_layout as level1_2_layout
 
 
@@ -27,8 +27,17 @@ class Level1_2(Level):
         self.boss_shake_intensity = 30  # Intensidad de la sacudida (mayor = más fuerte)
         self.boss_shake_duration = 15   # Duración de la sacudida en frames
         
-        # Partículas
+        # Partículas y Pinchos
         self.particles = []
+        self.particles = []
+        self.spikes = []
+        # Configuración de pinchos por cada golpe (índices de plataformas)
+        # Debe coincidir con el número de boss_impact_frames
+        self.spike_platforms = [
+            [1, 4, 5],      # Frame 1
+            [3, 2]         # Frame 35
+        ]
+        self.spike_duration = 60 # Duración de los pinchos
         
     def update(self):
         """Actualizar nivel"""
@@ -47,6 +56,14 @@ class Level1_2(Level):
                 if self.boss.current_frame in self.boss_impact_frames and self.last_boss_frame != self.boss.current_frame:
                     self.start_shake(intensity=self.boss_shake_intensity, duration=self.boss_shake_duration)
                     self.spawn_impact_particles()
+                    
+                    # Encontrar qué índice de impacto es este
+                    try:
+                        impact_index = self.boss_impact_frames.index(self.boss.current_frame)
+                        self.spawn_spikes(impact_index)
+                    except ValueError:
+                        pass # No debería ocurrir dado el if
+                        
                 self.last_boss_frame = self.boss.current_frame
             
             # Verificar colisiones de ataque de puño del jefe - MUERTE INSTANTÁNEA
@@ -74,6 +91,15 @@ class Level1_2(Level):
             particle.update()
             if not particle.is_alive():
                 self.particles.remove(particle)
+
+        # Actualizar pinchos
+        for spike in self.spikes[:]:
+            spike.update()
+            if spike.get_rect().colliderect(self.player.get_rect()):
+                self.player.take_damage(spike.damage)
+            
+            if not spike.is_alive():
+                self.spikes.remove(spike)
     
     def spawn_impact_particles(self):
         """Generar partículas de tierra desde la parte inferior de la pantalla"""
@@ -100,6 +126,29 @@ class Level1_2(Level):
                 size_range=(3, 6),        # Trozos pequeños
                 decay_range=(5, 10)       # Desvanecer más rápido
             ))
+
+    def spawn_spikes(self, config_index):
+        """Generar pinchos en las plataformas seleccionadas según el índice de configuración"""
+        if not self.spike_platforms:
+            return
+
+        # Usar módulo para ciclar las configuraciones si hay menos configuraciones que impactos
+        actual_index = config_index % len(self.spike_platforms)
+        platforms_to_spike = self.spike_platforms[actual_index]
+        
+        for i in platforms_to_spike:
+            if i < len(self.platforms):
+                platform = self.platforms[i]
+                # Crear pinchos a lo largo de la plataforma
+                # Un pincho cada 20 pixeles
+                spike_width = 20
+                spike_height = 30
+                num_spikes = platform.width // spike_width
+                
+                for j in range(num_spikes):
+                    x = platform.x + j * spike_width
+                    y = platform.y - spike_height
+                    self.spikes.append(Spike(x, y, spike_width, spike_height, duration=self.spike_duration))
     
     def draw(self, screen):
         """Dibujar nivel"""
@@ -128,6 +177,10 @@ class Level1_2(Level):
         # Dibujar partículas
         for particle in self.particles:
             particle.draw(screen)
+            
+        # Dibujar pinchos
+        for spike in self.spikes:
+            spike.draw(screen)
         
         # Aplicar sacudida desplazando todo el contenido de la pantalla
         if shake_x != 0 or shake_y != 0:

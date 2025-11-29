@@ -21,6 +21,23 @@ def get_platforms():
     ]
     return platforms
 
+def get_spikes():
+    """Devolver lista de definiciones de pinchos (x, y, ancho, alto)"""
+    # Ejemplo: Poner pinchos en la plataforma pequeña de la derecha (680, 300)
+    # La plataforma mide 50 de ancho.
+    return [
+        (200, 550, 50, 60),
+        (260, 550, 50, 60), 
+        (320, 550, 50, 60),
+        (380, 550, 50, 60),
+        (440, 550, 50, 60),
+        (500, 550, 50, 60),
+        (560, 550, 50, 60),
+        (620, 550, 50, 60),
+        (680, 550, 50, 60),
+        (740, 550, 50, 60)
+    ]
+
 def get_goal_position():
     """Devolver la posición de la meta (x, y, ancho, alto)"""
     return (980, 0, 40, 600)

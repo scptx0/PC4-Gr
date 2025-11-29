@@ -1,7 +1,7 @@
 import pygame
 import random
 from ..base import Level
-from entities import Player
+from entities import Player, Spike
 import levels.level1.level1_1_layout as level1_1_layout
 
 
@@ -18,6 +18,13 @@ class Level1_1(Level):
         goal_data = level1_1_layout.get_goal_position()
         self.goal = pygame.Rect(goal_data[0], goal_data[1], goal_data[2], goal_data[3])
         
+        # Pinchos estáticos
+        self.spikes = []
+        spike_data = level1_1_layout.get_spikes()
+        for s in spike_data:
+            # x, y, width, height
+            self.spikes.append(Spike(s[0], s[1], s[2], s[3], duration=-1))
+        
         # Configuración de sacudida
         self.shake_interval_min = 60  # Frames mínimos entre sacudidas (5 segundos)
         self.shake_interval_max = 100  # Frames máximos entre sacudidas (10 segundos)
@@ -31,6 +38,12 @@ class Level1_1(Level):
         # Verificar si el jugador alcanzó la meta
         if self.player.get_rect().colliderect(self.goal):
             self.completed = True
+            
+        # Actualizar pinchos
+        for spike in self.spikes:
+            spike.update()
+            if spike.get_rect().colliderect(self.player.get_rect()):
+                self.player.take_damage(spike.damage)
         
         # Reiniciar temporizador de sacudida para la siguiente sacudida (específico del nivel)
         if self.shake_timer <= 0:
@@ -49,6 +62,10 @@ class Level1_1(Level):
             platform.draw(screen)
         
         self.player.draw(screen)
+        
+        # Dibujar pinchos
+        for spike in self.spikes:
+            spike.draw(screen)
         
         # Aplicar sacudida desplazando todo el contenido de la pantalla
         if shake_x != 0 or shake_y != 0:
