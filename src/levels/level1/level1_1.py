@@ -12,6 +12,7 @@ class Level1_1(Level):
         self.platforms = level1_1_layout.get_platforms()
         player_x, player_y = level1_1_layout.get_player_start()
         self.player = Player(player_x, player_y)
+        self.player.abilities = ["shoot"]  # Habilitar disparo
         self.hint_message = level1_1_layout.get_hint_message()
         
         # Meta

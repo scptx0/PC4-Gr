@@ -19,7 +19,11 @@ class Level:
         self.shake_offset_y = 0
         self.shake_intensity = 1
         self.shake_duration = 0
+        self.shake_duration = 0
         self.shake_timer = 100  # Intervalo aleatorio entre sacudidas (3-7 segundos)
+        
+        # Color de UI estable para este nivel
+        self.ui_color = (random.randint(100, 255), random.randint(100, 255), random.randint(100, 255))
         
     def reset(self):
         """Reiniciar nivel - para ser sobrescrito"""
@@ -75,6 +79,9 @@ class Level:
         # Dibujar mensaje de pista
         if self.show_hint and self.hint_message:
             self.draw_hint(screen)
+            
+        # Dibujar UI de habilidades
+        self.draw_abilities(screen)
     
     def draw_hint(self, screen):
         """Dibujar mensaje de pista en la parte superior de la pantalla"""
@@ -82,4 +89,64 @@ class Level:
         text = font.render(self.hint_message, True, (0, 0, 0))  # Texto negro
         text_rect = text.get_rect(center=(self.screen_width // 2, 40))
         
+        screen.blit(text, text_rect)
+
+    def draw_abilities(self, screen):
+        """Dibujar indicador de habilidades en la esquina inferior derecha"""
+        if not self.player:
+            return
+            
+        # Colores
+        BLACK = (0, 0, 0)
+        
+        # Determinar texto de habilidad
+        ability_text = "NINGUNA"
+        if "shoot" in self.player.abilities:
+            ability_text = "DISPARO"
+        
+        text_str = f"HABILIDAD: {ability_text}"
+        
+        # Configuración de fuente
+        font = pygame.font.Font('assets/fonts/TurretRoad-Medium.ttf', 20)
+        text = font.render(text_str, True, self.ui_color)
+        
+        # Dimensiones y márgenes
+        margin_right = 10
+        margin_bottom = 10
+        padding_x = 15
+        padding_y = 10
+        icon_size = 20
+        icon_padding = 10
+        
+        # Calcular tamaño total
+        total_width = text.get_width() + padding_x * 2
+        if "shoot" in self.player.abilities:
+            total_width += icon_size + icon_padding
+            
+        total_height = text.get_height() + padding_y * 2
+        
+        # Posición del fondo
+        bg_rect = pygame.Rect(0, 0, total_width, total_height)
+        bg_rect.bottomright = (self.screen_width - margin_right, self.screen_height - margin_bottom)
+        
+        # Dibujar fondo (negro semitransparente)
+        s = pygame.Surface((bg_rect.width, bg_rect.height))
+        s.set_alpha(230)
+        s.fill(BLACK)
+        screen.blit(s, bg_rect.topleft)
+        
+        # Dibujar borde random
+        pygame.draw.rect(screen, self.ui_color, bg_rect, 2)
+        
+        # Dibujar Icono
+        text_x = bg_rect.left + padding_x
+        if "shoot" in self.player.abilities:
+            # Icono de proyectil (rectángulo random)
+            icon_rect = pygame.Rect(bg_rect.left + padding_x, bg_rect.centery - icon_size // 2 + 2, 
+                                  icon_size, icon_size // 2)
+            pygame.draw.rect(screen, self.ui_color, icon_rect)
+            text_x += icon_size + icon_padding
+            
+        # Dibujar texto
+        text_rect = text.get_rect(midleft=(text_x, bg_rect.centery))
         screen.blit(text, text_rect)

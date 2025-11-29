@@ -10,8 +10,10 @@ class Level1_2(Level):
     def __init__(self, screen_width, screen_height):
         super().__init__(screen_width, screen_height)
         self.platforms = level1_2_layout.get_platforms()
-        player_x, player_y = level1_2_layout.get_player_start()
-        self.player = Player(player_x, player_y)
+        # Crear jugador
+        player_start_x, player_start_y = level1_2_layout.get_player_start()
+        self.player = Player(player_start_x, player_start_y)
+        self.player.abilities = ["shoot"]  # Habilitar disparo
         self.hint_message = level1_2_layout.get_hint_message()
         
         # Jefe

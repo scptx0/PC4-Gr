@@ -28,7 +28,11 @@ class Player:
         self.squash_amount = 0.0  # Cantidad actual de aplastamiento/estiramiento
         self.target_squash = 0.0  # Cantidad objetivo de aplastamiento
         self.squash_speed = 0.35  # Velocidad de animación de aplastamiento
+        self.squash_speed = 0.35  # Velocidad de animación de aplastamiento
         self.was_on_ground = False  # Rastrear estado anterior en el suelo
+        
+        # Sistema de habilidades
+        self.abilities = []  # Lista de habilidades habilitadas (ej: ["shoot"])
     
     def handle_input(self, keys):
         """Manejar entrada de movimiento del jugador"""
@@ -55,6 +59,9 @@ class Player:
     
     def shoot(self):
         """Disparar un proyectil"""
+        if "shoot" not in self.abilities:
+            return False
+            
         if self.shoot_cooldown <= 0:
             # Puedes ajustar el tamaño del proyectil aquí
             projectile_width = 20
