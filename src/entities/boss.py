@@ -13,6 +13,11 @@ class Boss:
     VISUAL_X = 250
     VISUAL_Y = 60
 
+    # Constantes de hitbox (Ajustables)
+    HITBOX_WIDTH = 300
+    HITBOX_HEIGHT = 250
+    HITBOX_OFFSET_Y = -20
+
     def __init__(self, x, y):
         # Cargar frames de animación del jefe
         self.x = x
@@ -137,6 +142,10 @@ class Boss:
             core_center_y = int(float_y + self.image_height // 2)
             pygame.draw.circle(screen, (0, 0, 0), (core_center_x, core_center_y), self.image_width // 2)
         
+        # Dibujar hitbox
+        hitbox_rect = self.get_rect()
+        pygame.draw.rect(screen, (255, 0, 0), hitbox_rect, 2)
+
         # Dibujar barra de salud
         self.draw_health(screen)
     
@@ -172,7 +181,14 @@ class Boss:
     
     def get_rect(self):
         """Obtener rectángulo del núcleo del jefe para colisiones"""
-        return pygame.Rect(self.x, self.y, self.image_width, self.image_height)
+        center_x = self.VISUAL_X + self.VISUAL_WIDTH // 2
+        center_y = self.VISUAL_Y + self.VISUAL_HEIGHT // 2
+        
+        hitbox_center_y = center_y + self.HITBOX_OFFSET_Y
+        
+        rect = pygame.Rect(0, 0, self.HITBOX_WIDTH, self.HITBOX_HEIGHT)
+        rect.center = (center_x, hitbox_center_y)
+        return rect
     
     def get_all_attack_rects(self):
         """Obtener todos los rectángulos de ataque - el jefe ataca con todo su cuerpo"""
