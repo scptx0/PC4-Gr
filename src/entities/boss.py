@@ -143,8 +143,8 @@ class Boss:
             pygame.draw.circle(screen, (0, 0, 0), (core_center_x, core_center_y), self.image_width // 2)
         
         # Dibujar hitbox
-        hitbox_rect = self.get_rect()
-        pygame.draw.rect(screen, (255, 0, 0), hitbox_rect, 2)
+        # hitbox_rect = self.get_rect()
+        # pygame.draw.rect(screen, (255, 0, 0), hitbox_rect, 2)
 
         # Dibujar barra de salud
         self.draw_health(screen)
